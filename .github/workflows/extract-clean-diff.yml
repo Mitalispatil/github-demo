@@ -1,0 +1,38 @@
+name: Extract Clean Code Diff
+
+on: [push]
+
+jobs:
+  feed-to-model:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code (fetch last 2 commits)
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+
+    - name: Extract only code diffs
+      run: |
+        echo "🧠 Extracting code diffs for model..."
+
+        # Get changed source files (exclude workflow files, etc.)
+        CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.(py|js|ts|java|cpp|html|css)$' || true)
+
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "🚫 No source code changes detected."
+          exit 0
+        fi
+
+        echo "📂 Changed source files:"
+        echo "$CHANGED_FILES"
+
+        echo "📄 Clean diff to feed to model:"
+        echo "----------------------------------"
+        for file in $CHANGED_FILES; do
+          echo "File: $file"
+          git diff HEAD^ HEAD -- "$file"
+          echo ""
+        done
+        echo "----------------------------------"
+        echo "✅ This clean diff is ready to be fed to the model."
